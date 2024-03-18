@@ -1,0 +1,76 @@
+---
+
+import * as interfaces from "../../lib/interfaces";
+import Caption from "./Caption.astro";
+import { SHORTCODES } from "@/constants";
+import { Icon } from "astro-iconify";
+import { getTextToAstroIcon } from "@/lib/style-helpers";
+import NACode from "./NACode.astro";
+
+
+export interface Props {
+	block: interfaces.Block;
+  setId?:boolean;
+}
+
+const { block, setId=true } = Astro.props
+
+
+const code = block.Code.RichTexts.map(
+	(richText: interfaces.RichText) => richText.Text.Content,
+).join("");
+const language = block.Code.Language.toLowerCase();
+const code_inject = SHORTCODES["html"]? code.startsWith(SHORTCODES["html"]):false;
+const plainTextCaption = block.Code?.Caption.map((richText) => richText.PlainText).join(' ');
+// <Fragment set:html={code.replace(SHORTCODES["html"],"")}/>
+---
+
+
+{
+  code_inject ?
+  (
+    <div class="injectedcode w-full mb-1 max-w-full" id={setId?block.Id:undefined}>
+    <iframe srcdoc={code.replace(SHORTCODES["html"],"") } class="max-w-full screen:h-[340px] w-full border-none rounded-lg" loading="lazy" title={plainTextCaption}></iframe>
+  </div>
+
+  )
+  :
+  (
+  <div class="code w-full mb-1 relative max-w-full text-sm" id={setId?block.Id:undefined}>
+    <div class={`${language === 'mermaid' ? "overflow-x-scroll" : "screen:max-h-[340px] overflow-scroll"} min-w-0`}>
+                <div class="flex max-w-full">
+            <button class="print:hidden copy border-0 p-2 cursor-pointer absolute top-0 right-0 text-gray-500" data-code={code} aria-label="copy code" onclick="
+                const code = this.getAttribute('data-code');
+                navigator.clipboard.writeText(code);
+                const svgBefore = this.querySelector('.copy-icon-before');
+                const svgAfter = this.querySelector('.copy-icon-done');
+                if (svgBefore && svgAfter) {
+                    svgBefore.classList.toggle('hidden');
+                    svgAfter.classList.toggle('hidden');
+                    setTimeout(() => {
+                        svgBefore.classList.toggle('hidden');
+                        svgAfter.classList.toggle('hidden');
+                    }, 1000);
+                }
+            ">
+              <Icon class="h-6 w-6 copy-icon-before" name={getTextToAstroIcon("clipboard-copy-code")} aria-label="copy code"/>
+              <Icon class="h-6 w-6 copy-icon-done hidden" name={getTextToAstroIcon("clipboard-copy-code-done")} aria-label="copied code"/>
+            </button>
+          </div>
+		{
+
+			language === 'mermaid' ? (
+         <pre class="rounded mermaid p-4 max-w-full font-mono">{code}</pre>
+      ) : (
+      <NACode code={code} lang={language} theme="github-dark-dimmed"/>
+      )
+		}
+	</div>
+	<Caption richTexts={block.Code.Caption}  block={block}/>
+</div>
+  )
+}
+<script>
+  import mermaid from 'mermaid'
+  mermaid.initialize({ startOnLoad: true, theme: 'base' })
+</script>

@@ -1,0 +1,35 @@
+---
+import PageLayout from "@/layouts/Base";
+import { getNavLink } from "@/lib/blog-helpers";
+import { getCollections } from "@/utils";
+import {slugify} from '@/utils';
+
+const meta = {
+	title: "All Collections",
+	description: "A list of all the collections for my posts",
+	ogImage: "/og-image/collectionsindex---index.png",
+};
+
+const collections = await getCollections();
+---
+
+<PageLayout meta={meta}>
+	<h1 class="title mb-6">Collections</h1>
+	<ul class="space-y-4">
+		{
+			collections.map((collection) => (
+				<li class="flex max-w-full items-center gap-x-2">
+					<a
+						class="webtrotion-page-link inline-block"
+						href={getNavLink("/collections/" + slugify(collection) + "/")}
+						title={`View posts with in collection: ${collection}`}
+						data-astro-prefetch
+            aria-label={`View posts with in collection: ${collection}`}
+					>
+						{collection}
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</PageLayout>

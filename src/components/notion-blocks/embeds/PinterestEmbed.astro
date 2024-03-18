@@ -1,0 +1,17 @@
+---
+export interface Props {
+	url: URL;
+  caption: string | undefined;
+}
+
+const { url, caption } = Astro.props;
+---
+
+<a href={url.toString()} data-pin-do="embedPin"></a>
+
+<script
+  type="text/javascript"
+  async
+  defer
+  src="//assets.pinterest.com/js/pinit.js"
+></script>

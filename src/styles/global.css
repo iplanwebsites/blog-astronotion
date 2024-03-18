@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --theme-bg: 249 249 249;
+--theme-text: 34 39 42;
+--theme-link: 85 123 118;
+--theme-accent: 203 41 65;
+--theme-accent-2: 17 17 17;
+--theme-quote: 203 41 65;
+
+  }
+
+  :root.dark {
+    color-scheme: dark;
+    --theme-bg: 28 30 32;
+--theme-text: 255 255 255;
+--theme-link: 199 200 203;
+--theme-accent: 41 188 136;
+--theme-accent-2: 237 237 237;
+--theme-quote: 205 254 183;
+
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  html body {
+    @apply mx-auto flex min-h-screen max-w-3xl flex-col bg-bgColor px-8 pt-8 text-textColor antialiased overflow-x-hidden;
+  }
+
+  * {
+    @apply scroll-mt-10
+  }
+  pre {
+    @apply rounded-md p-4 font-mono;
+  }
+}

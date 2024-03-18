@@ -1,0 +1,36 @@
+---
+import { GISCUS } from "@/constants";
+const filled_in_giscus =
+	GISCUS &&
+	GISCUS["data-repo"] &&
+	GISCUS["data-repo-id"] &&
+	GISCUS["data-category"] &&
+	GISCUS["data-category-id"];
+---
+
+{
+	filled_in_giscus && (
+		<>
+			<section class="giscus mx-auto mt-10 w-full" id="--layout-div-giscus-post-comments" />
+			<script
+				src="https://giscus.app/client.js"
+				data-repo={GISCUS["data-repo"]}
+				data-repo-id={GISCUS["data-repo-id"]}
+				data-category={GISCUS["data-category"]}
+				data-category-id={GISCUS["data-category-id"]}
+				data-mapping={GISCUS["data-mapping"] ? GISCUS["data-mapping"] : "url"}
+				data-strict="0"
+				data-reactions-enabled={GISCUS["data-reactions-enabled"] ? "1" : "0"}
+				data-emit-metadata="0"
+				data-input-position={
+					GISCUS["data-input-position"] ? GISCUS["data-input-position"] : "bottom"
+				}
+				data-theme="preferred_color_scheme"
+				data-lang="en"
+				data-loading="lazy"
+				crossorigin="anonymous"
+				async
+			/>
+		</>
+	)
+}

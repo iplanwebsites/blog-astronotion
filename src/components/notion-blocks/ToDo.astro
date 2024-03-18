@@ -1,0 +1,57 @@
+---
+import * as interfaces from "../../lib/interfaces.ts";
+import { getNotionColorToTailwindColor } from "../../lib/style-helpers.ts";
+import RichText from "./RichText.astro";
+import NotionBlocks from "../NotionBlocks.astro";
+import { Icon } from "astro-iconify";
+import { getTextToAstroIcon } from "@/lib/style-helpers";
+
+export interface Props {
+  block: interfaces.Block;
+  headings: interfaces.Block[];
+  renderChildren?: boolean; // Make this optional
+  setId?:boolean;
+}
+
+const { block, headings, renderChildren = true, setId=true } = Astro.props;
+---
+
+<div class="to-do pl-2 leading-7" id={setId?block.Id:undefined}>
+	{
+		block.ListItems.filter((b: interfaces.Block) => b.Type === "to_do").map(
+			(b: interfaces.Block, index) => (
+				<div key={index} class="mb-2" id={setId?b.Id:undefined}>
+					<div class={`flex max-w-full items-start ${getNotionColorToTailwindColor(b.ToDo.Color)}`}>
+						{/* Flex container for the checkbox and text */}
+						<div class="pr-2 mt-1">
+							{/* Padding for the checkbox */}
+
+              <Icon class="h-5 w-5 text-textColor/50" name={getTextToAstroIcon(b.ToDo.Checked?"checkbox-checked":"checkbox-blank")} aria-label={b.ToDo.Checked?"checkbox-checked":"checkbox-blank"} focusable="false" />
+
+						</div>
+						<div class="flex-1 min-w-0">
+							{/* Container for text, taking up the rest of the space */}
+							{b.ToDo.RichTexts.map((richText: interfaces.RichText) => {
+								if (b.ToDo.Checked) {
+									return (
+										<span class="line-through decoration-slate-500/50">
+											{/* Block element for the text */}
+											<RichText richText={richText} blockID={b.Id} />
+										</span>
+									);
+								}
+								return <RichText richText={richText} blockID={b.Id}/>;
+							})}
+						</div>
+					</div>
+					{b.HasChildren && renderChildren && (
+						<div class="mt-1">
+							{/* Margin for spacing between the to-do and its children */}
+							<NotionBlocks blocks={b.ToDo.Children} headings={headings} renderChildren={renderChildren} setId={setId}/>
+						</div>
+					)}
+				</div>
+			),
+		)
+	}
+</div>

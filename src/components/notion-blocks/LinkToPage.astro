@@ -1,0 +1,15 @@
+---
+import * as interfaces from '../../lib/interfaces.ts'
+import MentionPage from './MentionPage.astro'
+
+export interface Props {
+  block: interfaces.Block
+  setId?:boolean;
+}
+
+const { block, setId=true  } = Astro.props
+---
+
+<p id={setId?block.Id:undefined}>
+  <MentionPage pageId={block.LinkToPage.PageId} />
+</p>

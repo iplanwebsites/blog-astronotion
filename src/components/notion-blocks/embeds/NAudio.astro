@@ -1,0 +1,32 @@
+---
+import * as interfaces from "../../../lib/interfaces.ts";
+import Caption from "../Caption.astro";
+import { filePath } from "../../../lib/blog-helpers";
+
+export interface Props {
+	block: interfaces.Block;
+  setId?:boolean;
+}
+
+const { block,  setId=true } = Astro.props;
+
+let url: URL | null = null;
+let audioUrl = "";
+if (block.NAudio.External) {
+	audioUrl = block.NAudio.External?.Url;
+	url = new URL(block.NAudio.External?.Url);
+} else if (block.NAudio.File) {
+	audioUrl = filePath(new URL(block.NAudio.File.Url));
+}
+---
+
+<div class="audio-elem p-2" id={setId?block.Id:undefined}>
+	{
+		audioUrl && (
+			<audio class="max-w-full"controls src={audioUrl}>
+				Your browser does not support the audio element.
+			</audio>
+		)
+	}
+	<Caption richTexts={block.NAudio.Caption}  block={block} />
+</div>

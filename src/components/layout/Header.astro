@@ -1,0 +1,180 @@
+---
+import Search from "../Search.astro";
+import { getMenu } from "@/utils";
+import { siteInfo } from "@/site.config";
+import { filePath, getNavLink } from "@/lib/blog-helpers";
+import {Icon} from "astro-iconify";
+import { getTextToAstroIcon } from "@/lib/style-helpers";
+import ThemeIcon from "../ThemeIcon.astro";
+
+const menuLinks = await getMenu();
+
+const url = new URL(Astro.request.url);
+
+let customIconURL: string = "";
+if (siteInfo.logo && siteInfo.logo.Type === "file") {
+	try {
+		customIconURL = filePath(new URL(siteInfo.logo.Url));
+	} catch (err) {
+		console.log("Invalid DB custom icon URL");
+	}
+}
+
+const rss_path = getNavLink("/rss.xml");
+---
+
+<header
+	id="main-header"
+	class="group relative screen:mb-16 print mb-8 flex w-full items-center justify-between sm:ps-[4.5rem] lg:-ml-[25%] lg:w-[150%]">
+	<div class="flex sm:flex-col">
+		<a
+			href={getNavLink("/")}
+			class="inline-flex items-center grayscale hover:filter-none sm:relative sm:inline-block"
+			aria-current={url.pathname === "/" ? "page" : false}
+		>
+			{
+				siteInfo.logo && siteInfo.logo.Type === "emoji" ? (
+					<>
+						<span class="sm:h-15 sm:w-15 me-3 h-10 w-10 sm:absolute sm:start-[-4.5rem] sm:me-0">
+							{siteInfo.logo.Emoji}
+						</span>
+						<span class="text-xl font-bold sm:text-2xl">{siteInfo.title}</span>
+					</>
+				) : siteInfo.logo && siteInfo.logo.Type === "external" ? (
+					<>
+						<img
+							class="sm:h-15 sm:w-15 me-3 h-10 w-10 object-contain sm:absolute sm:start-[-4.5rem] sm:me-0"
+							loading="eager" src={siteInfo.logo.Url} alt="Site header image"
+						/>
+						<span class="text-xl font-bold sm:text-2xl">{siteInfo.title}</span>
+					</>
+				) : siteInfo.logo && siteInfo.logo.Type === "file" && customIconURL ? (
+					<>
+						<img
+              loading="eager"
+							src={customIconURL}
+							class="sm:h-15 sm:w-15 me-3 h-10 w-10 object-contain sm:absolute sm:start-[-4.5rem] sm:me-0" alt="Site header image"
+						/>
+						<span class="text-xl font-bold sm:text-2xl">{siteInfo.title}</span>
+					</>
+				) : (
+					<span class="text-xl font-bold sm:text-2xl">{siteInfo.title}</span>
+				)
+			}
+		</a>
+		<nav
+			id="navigation-menu"
+			class="print:hidden md absolute -inset-x-4 top-14 hidden flex-col items-end rounded-md bg-bgColor/90 py-2 text-base text-accent shadow backdrop-blur group-[.menu-open]:z-50 group-[.menu-open]:flex sm:static sm:z-auto sm:-ms-4 sm:mt-1 sm:flex sm:flex-row sm:items-center sm:rounded-none sm:py-0 sm:text-sm sm:shadow-none sm:backdrop-blur-none lg:text-base"
+			aria-label="Main menu"
+		>
+			{
+				menuLinks.map((link) => (
+					<a
+						href={link.path}
+						class="px-4 py-4 underline-offset-4 sm:py-0 sm:hover:underline sm:hover:decoration-wavy sm:hover:decoration-accent-2/40 w-full sm:w-auto text-right sm:text-left"
+						aria-current={url.pathname === link.path ? "page" : false}
+						data-astro-prefetch
+					>
+						{link.title}
+					</a>
+				))
+			}
+		</nav>
+	</div>
+	<div class="flex flex-row print:hidden">
+		<div class="h-10 w-10 items-center justify-center rounded-md p-1.5 hover:text-accent">
+			<a href={rss_path}
+				><Icon
+					name={getTextToAstroIcon("rss")}
+					class="h-7 w-7 hover:text-accent"
+					aria-label="Open RSS Link"
+				/></a
+			>
+		</div>
+		<Search />
+		<ThemeIcon />
+		<mobile-button>
+			<button
+				id="toggle-navigation-menu"
+				class="group relative ms-4 h-7 w-7 sm:invisible sm:hidden"
+				type="button"
+				aria-label="Open main menu"
+				aria-expanded="false"
+				aria-haspopup="menu"
+			>
+				<svg
+					id="line-svg"
+					class="absolute start-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 transition-all group-aria-expanded:scale-0 group-aria-expanded:opacity-0"
+					aria-hidden="true"
+					focusable="false"
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="1.5"
+					stroke="currentColor"
+				>
+					<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5"
+					></path>
+				</svg>
+				<svg
+					id="cross-svg"
+					class="absolute start-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 scale-0 text-accent opacity-0 transition-all group-aria-expanded:scale-100 group-aria-expanded:opacity-100"
+					class="text-accent"
+					aria-hidden="true"
+					focusable="false"
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="1.5"
+					stroke="currentColor"
+				>
+					<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+				</svg>
+			</button>
+		</mobile-button>
+	</div>
+</header>
+
+<script>
+	class MobileNavBtn extends HTMLElement {
+		constructor() {
+			super();
+
+			const mobileButtonEl = document.getElementById("toggle-navigation-menu");
+			let menuOpen = false;
+
+			function toggleMobileMenu() {
+				const headerEl = document.getElementById("main-header")!;
+				headerEl.classList.toggle("menu-open");
+				menuOpen = !menuOpen;
+				mobileButtonEl.setAttribute("aria-expanded", menuOpen.toString());
+			}
+
+			mobileButtonEl.addEventListener("click", () => toggleMobileMenu());
+		}
+	}
+
+	customElements.define("mobile-button", MobileNavBtn);
+
+	document.addEventListener("DOMContentLoaded", function () {
+		var toggleButton = document.getElementById("toggle-navigation-menu");
+
+		document.addEventListener("click", function (event) {
+			var navMenu = document.getElementById("navigation-menu");
+			var mainHeader = document.getElementById("main-header");
+
+			// Check if the click is on the toggle button or a descendant of it
+			var isClickInsideToggleButton = toggleButton.contains(event.target);
+
+			if (!isClickInsideToggleButton && event.target instanceof Node) {
+				var isClickInsideNav = navMenu.contains(event.target);
+
+				if (!isClickInsideNav && mainHeader) {
+					// If the click is outside the navMenu and mainHeader exists, remove 'menu-open' attribute
+					mainHeader.classList.remove("menu-open");
+          toggleButton.setAttribute("aria-expanded", "false");
+				}
+			}
+		});
+	});
+</script>

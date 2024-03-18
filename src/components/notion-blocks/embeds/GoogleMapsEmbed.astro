@@ -1,0 +1,26 @@
+---
+import {Icon} from "astro-iconify";
+import { getTextToAstroIcon } from "@/lib/style-helpers";
+import { ENABLE_LIGHTBOX } from "@/constants";
+export interface Props {
+	url: URL;
+  caption: string | undefined;
+}
+
+const { url, caption } = Astro.props;
+---
+
+<div class="relative w-full aspect-ratio-4-3">
+  <!-- Icon for triggering lightbox, positioned at the bottom right corner -->
+  {ENABLE_LIGHTBOX && (<a href={url.toString()} class="embedglightbox absolute top-4 right-4 m-2 cursor-pointer z-10 text-accent-2" aria-label="Click to expand" >
+    <Icon name={getTextToAstroIcon("expand")} class="inline h-6 w-6" aria-hidden="true"/>
+  </a>)}
+
+  <iframe data-src={url.toString()} allowfullscreen="" loading="lazy" class="max-w-full w-full h-full absolute top-0 left-0 border-none rounded-lg lazyload" referrerpolicy="no-referrer-when-downgrade" title="google maps embed"}></iframe>
+</div>
+
+<style>
+  .aspect-ratio-4-3 {
+    padding-top: 75%; /* 3/4 = 75% for 4:3 Aspect Ratio */
+}
+</style>

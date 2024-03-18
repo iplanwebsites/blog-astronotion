@@ -1,0 +1,121 @@
+---
+import type { SiteMeta } from "@/types";
+// import { siteConfig } from "@/site-config";
+import "../styles/global.css";
+// import { siteInfo } from "@/utils";
+import { siteInfo } from "@/siteInfo";
+import {ENABLE_LIGHTBOX, PUBLIC_GA_TRACKING_ID, THEME, GOOGLE_SEARCH_CONSOLE_META_TAG } from "@/constants";
+import GoogleFontsOptimizer from "@/components/GoogleFontsOptimizer";
+import { HOME_PAGE_SLUG } from "@/constants";
+import { getNavLink } from "@/lib/blog-helpers";
+const theme_config_font_url = THEME['fontfamily-google-fonts']['combined-url'];
+
+type Props = SiteMeta;
+
+const { title, description, ogImage, articleDate } = Astro.props;
+
+const titleSeparator = "•";
+const siteTitle = `${title} ${titleSeparator} ${siteInfo.title}`;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const socialImageURL = new URL(getNavLink(ogImage ? ogImage : `/og-image/${HOME_PAGE_SLUG}.png`), Astro.url).href;
+const faviconLink = getNavLink("/favicon.ico")
+
+---
+
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
+{
+  theme_config_font_url && (<GoogleFontsOptimizer url={theme_config_font_url}>
+    </GoogleFontsOptimizer>)
+}
+{
+  ENABLE_LIGHTBOX && (<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" media="print" onload="this.media='all'" />
+)
+}
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>{siteTitle}</title>
+
+{/* Icons / Favicon */}
+<link rel="icon" href={faviconLink} sizes="any" />
+<!-- <link rel="icon" href="/icon.svg" type="image/svg+xml" /> -->
+<!-- <link rel="apple-touch-icon" href="/apple-touch-icon.png" /> -->
+<link rel="canonical" href={canonicalURL} />
+
+{/* Primary Meta Tags */}
+<meta name="title" content={siteTitle} />
+<meta name="description" content={description} />
+<meta name="author" content={siteInfo.author} />
+
+{/* Theme Colour */}
+<meta name="theme-color" content="" />
+
+{/* Open Graph / Facebook */}
+<meta property="og:type" content={articleDate ? "article" : "website"} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:site_name" content={siteInfo.title} />
+<meta property="og:locale" content={siteInfo.ogLocale} />
+{ogImage && (<meta property="og:image" content={socialImageURL} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />)}
+
+{
+	articleDate && (
+		<>
+			<meta property="article:author" content={siteInfo.author} />
+			<meta property="article:published_time" content={articleDate} />
+		</>
+	)
+}
+
+{/* Twitter */}
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:url" content={canonicalURL} />
+<meta property="twitter:title" content={title} />
+<meta property="twitter:description" content={description} />
+{
+  GOOGLE_SEARCH_CONSOLE_META_TAG && (<meta name="google-site-verification" content={GOOGLE_SEARCH_CONSOLE_META_TAG} />)
+}
+{ogImage && (<meta property="twitter:image" content={socialImageURL} />)}
+
+{/* Sitemap */}
+<link rel="sitemap" href="/sitemap-index.xml" />
+
+{/* Katex */}
+<link
+	rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css"
+	integrity="sha384-vKruj+a13U8yHIkAyGgK1J3ArTLzrFGBbBc0tDp4ad/EyewESeXE/Iv67Aj8gKZ0"
+	crossorigin="anonymous"
+  media="print" onload="this.media='all'"
+/>
+
+{/* RSS auto-discovery */}
+<link rel="alternate" type="application/rss+xml" title={siteInfo.title} href={getNavLink("/rss.xml")} />
+
+{/* Webmentions */}
+{
+	siteInfo.webmentions && (
+		<>
+			<link rel="webmention" href={siteInfo.webmentions.link} />
+			{siteInfo.webmentions.pingback && (
+				<link rel="pingback" href={siteInfo.webmentions.pingback} />
+			)}
+		</>
+	)
+}
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async=""></script>
+{
+  PUBLIC_GA_TRACKING_ID && (
+  <script type="text/partytown" src={`https://www.googletagmanager.com/gtag/js?id=${PUBLIC_GA_TRACKING_ID}`} defer ></script>
+  <script type="text/partytown" define:vars={{ PUBLIC_GA_TRACKING_ID }} defer>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', PUBLIC_GA_TRACKING_ID);
+  </script>
+)
+}

@@ -1,0 +1,107 @@
+---
+// import type { CollectionEntry } from "astro:content";
+// import type { HTMLTag, Polymorphic } from "astro/types";
+import type { HTMLTag } from "astro/types";
+import FormattedDate from "../FormattedDate.astro";
+import type { Post } from "src/lib/interfaces";
+import { getPostContentByPostId, processFileBlocks } from "@/lib/notion/client";
+import { extractTargetBlocks, getNavLink, getPostLink } from "@/lib/blog-helpers";
+import NotionBlocks from "src/components/NotionBlocks.astro";
+import {
+	getNotionColorToTailwindColor,
+	getNotionColorToTailwindColorForBorder,
+} from "@/lib/style-helpers";
+import { MENU_PAGES_COLLECTION } from "@/constants";
+
+// type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> & {
+// 	post: CollectionEntry<"post">;
+// 	withDesc?: boolean;
+// };
+//FIXME: why is this a new method?
+
+interface Props {
+	post_full_preview: Post;
+	as?: HTMLTag;
+	withDesc?: boolean;
+}
+
+const { post_full_preview, as: Tag = "div", withDesc = false } = Astro.props;
+const { blocks, referencesInPage } = await getPostContentByPostId(post_full_preview);
+const fileAtacchedBlocks = extractTargetBlocks(["image", "video", "file", "audio"], blocks).filter(
+	(block) => {
+		if (!block) {
+			return false;
+		}
+		const imageOrVideoOrAudioOrFile = block.NImage || block.File || block.Video || block.NAudio;
+		return (
+			imageOrVideoOrAudioOrFile &&
+			imageOrVideoOrAudioOrFile.File &&
+			imageOrVideoOrAudioOrFile.File.Url
+		);
+	},
+);
+
+const processedFile = await processFileBlocks(fileAtacchedBlocks);
+
+const postLink = getPostLink(
+	post_full_preview.Slug,
+	post_full_preview.Collection === MENU_PAGES_COLLECTION,
+);
+---
+
+<FormattedDate
+	date={new Date(post_full_preview.Date)}
+	class="min-w-[120px] text-xs text-accent/90"
+/>
+
+<Tag class="font-bold">
+	<a href={postLink} class="webtrotion-page-link inline no-underline">
+		{post_full_preview.Title}
+	</a>
+</Tag>
+
+{
+	withDesc && post_full_preview.Excerpt && (
+		<q class="line-clamp-3 block italic">{post_full_preview.Excerpt}</q>
+	)
+}
+{
+	post_full_preview.Tags.length > 0 && (
+		<div class="mt-1 gap-2">
+			<svg
+				aria-hidden="true"
+				focusable="false"
+				xmlns="http://www.w3.org/2000/svg"
+				class="me-1 inline-block h-6 w-6"
+				viewBox="0 0 24 24"
+				stroke-width="1.5"
+				stroke="currentColor"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+				<path d="M7.859 6h-2.834a2.025 2.025 0 0 0 -2.025 2.025v2.834c0 .537 .213 1.052 .593 1.432l6.116 6.116a2.025 2.025 0 0 0 2.864 0l2.834 -2.834a2.025 2.025 0 0 0 0 -2.864l-6.117 -6.116a2.025 2.025 0 0 0 -1.431 -.593z" />
+				<path d="M17.573 18.407l2.834 -2.834a2.025 2.025 0 0 0 0 -2.864l-7.117 -7.116" />
+				<path d="M6 9h-.01" />
+			</svg>
+			{post_full_preview.Tags.map((tag, i) => (
+				<>
+					<a
+						class={`inline-block rounded-sm border text-sm ${getNotionColorToTailwindColor(
+							tag.color + "-background",
+						)} ${getNotionColorToTailwindColorForBorder(tag.color + "-background")}`}
+						aria-label={`View more blogs with the tag ${tag.name}`}
+						href={getNavLink("/tags/" + tag.name + "/")}
+					>
+						{tag.name}
+					</a>{" "}
+				</>
+			))}
+		</div>
+	)
+}
+
+<section>
+	<NotionBlocks blocks={blocks} isRoot={true} />
+</section>

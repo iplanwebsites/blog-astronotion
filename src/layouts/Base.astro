@@ -1,0 +1,203 @@
+---
+import type { SiteMeta } from "@/types";
+import BaseHead from "@/components/BaseHead";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import SkipLink from "@/components/SkipLink";
+import { siteInfo } from "@/siteInfo";
+import { ENABLE_LIGHTBOX, REFERENCES } from "@/constants";
+interface Props {
+meta: SiteMeta;
+}
+const {
+meta: { title = siteInfo.title, description = siteInfo.description, ogImage, articleDate },
+} = Astro.props;
+---
+<html lang={siteInfo.lang}>
+   <head>
+      <BaseHead title={title} description={description} ogImage={ogImage} articleDate={articleDate} />
+   </head>
+   <body class="print:max-w-full screen:max-w-3xl">
+      <SkipLink />
+      <Header />
+      <main id="main" class="lg:w-[125%]">
+         <slot />
+      </main>
+      <Footer />
+      <script type="module">
+        // Listen for beforeprint event to open all details elements
+window.addEventListener('beforeprint', function () {
+    document.querySelectorAll('details').forEach(function (detail) {
+        detail.setAttribute('open', true);
+        detail.dataset.wasOpen = 'true'; // Mark it as opened by the script
+    });
+});
+
+// Optional: Listen for afterprint event to close all details elements
+// that were opened by the script
+window.addEventListener('afterprint', function () {
+    document.querySelectorAll('details').forEach(function (detail) {
+        if (detail.dataset.wasOpen) {
+            detail.removeAttribute('open');
+            delete detail.dataset.wasOpen; // Clean up
+        }
+    });
+});
+      </script>
+      {/*Lightbox */}
+      {
+      ENABLE_LIGHTBOX && (
+      <script type="module">
+         import 'https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js';
+
+         window.addEventListener('load', () => {
+           const lightbox = GLightbox({
+             selector: '.mediaglightbox, .fileglightbox, .embedglightbox'
+           });
+         });
+      </script>
+      )
+      }
+      {
+      REFERENCES && REFERENCES["popovers"] && (
+      <script type="module">
+  import { computePosition, offset, shift, flip, autoUpdate } from 'https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.5.3/+esm';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const popoverTriggers = document.querySelectorAll('[data-popover-target]');
+    let openPopovers = [];
+    let cleanupAutoUpdate = new Map();
+    let hoverTimeouts = new Map();
+
+    const getPopoverLevel = (el) => {
+      let level = 0;
+      while (el && el.closest('[data-popover-target]')) {
+        level++;
+        el = el.parentElement;
+      }
+      console.log(level - 1);
+      return level - 1;
+    };
+
+    const hideAllPopovers = (level = 0) => {
+      console.log('hideAllPopovers called');
+      console.log(openPopovers);
+      openPopovers.forEach(popoverEl => {
+        if (getPopoverLevel(popoverEl) >= level) {
+          hidePopover(popoverEl);
+        }
+      });
+    };
+
+    const hidePopover = (popoverEl) => {
+      console.log('hidePopover called for', popoverEl);
+      if (popoverEl) {
+        popoverEl.style.visibility = 'hidden';
+        popoverEl.classList.add('hidden');
+        popoverEl.style.opacity = '0';
+        popoverEl.style.top = '0px';
+        popoverEl.style.left = '0px';
+
+        const cleanup = cleanupAutoUpdate.get(popoverEl);
+        if (cleanup) {
+          cleanup();
+          cleanupAutoUpdate.delete(popoverEl);
+        }
+        const openPopoverIndex = openPopovers.indexOf(popoverEl);
+        if (openPopoverIndex !== -1) {
+          openPopovers.splice(openPopoverIndex, 1);
+        }
+      }
+    };
+
+    const showPopover = (triggerEl, popoverEl) => {
+      const level = getPopoverLevel(triggerEl);
+      hideAllPopovers(level);
+
+      const update = () => {
+        computePosition(triggerEl, popoverEl, {
+          middleware: [offset(6),shift({ padding: 3 }), flip({ padding: 3 })]
+        }).then(({ x, y }) => {
+          Object.assign(popoverEl.style, {
+            left: `${x}px`,
+            top: `${y}px`,
+            position: 'absolute'
+          });
+        });
+      };
+
+      update();
+      popoverEl.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    popoverEl.style.visibility = 'visible';
+      popoverEl.style.opacity = '1';
+  });
+
+      openPopovers.push(popoverEl);
+      cleanupAutoUpdate.set(popoverEl, autoUpdate(triggerEl, popoverEl, update));
+    };
+
+    popoverTriggers.forEach(triggerEl => {
+      const popoverID = triggerEl.dataset.popoverTarget;
+      const popoverEl = document.getElementById(popoverID);
+
+      triggerEl.addEventListener('mouseenter', () => {
+        const timeoutId = hoverTimeouts.get(popoverEl);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          hoverTimeouts.delete(popoverEl);
+        }
+        showPopover(triggerEl, popoverEl);
+      });
+
+      triggerEl.addEventListener('mouseleave', () => {
+        const timeoutId = setTimeout(() => {
+          hidePopover(popoverEl);
+        }, 100);
+        hoverTimeouts.set(popoverEl, timeoutId);
+      });
+
+      triggerEl.addEventListener('focus', () => {
+        showPopover(triggerEl, popoverEl);
+      });
+
+      triggerEl.addEventListener('blur', () => {
+        hidePopover(popoverEl);
+      });
+
+      popoverEl.addEventListener('mouseenter', () => {
+        const timeoutId = hoverTimeouts.get(popoverEl);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      });
+
+      popoverEl.addEventListener('mouseleave', () => {
+        hidePopover(popoverEl);
+      });
+    });
+
+    document.addEventListener('click', (event) => {
+  const popoverLink = event.target.closest('[data-popover-link]');
+  if (popoverLink) {
+    hideAllPopovers(-1);
+  } else if (!event.target.closest('[data-popover-target]')) {
+    hideAllPopovers(-1);
+  }
+});
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        hideAllPopovers(-1);
+      }
+    });
+  });
+
+</script>
+
+
+
+      )
+      }
+   </body>
+</html>
